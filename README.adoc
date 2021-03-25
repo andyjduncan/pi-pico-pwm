@@ -1,0 +1,109 @@
+= Pi Pico PWM
+
+Turn a Raspberry Pi Pico into an 8-channel PWM driver controllable over I2C.
+PWM is implemented using PIO and can achieve frequencies of up to around
+162 kHz.
+
+== Installation
+
+=== Prerequistes
+
+Install the Pico SDK and its build dependencies as described in the https://github.com/raspberrypi/pico-sdk[project README].
+
+=== Building
+
+This project has been set up as described in Chapter 8 of the https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf[Getting started with Raspberry Pi Pico guide].
+
+In short, create a build directory, create the Makefile, and compile the project.
+
+[source, shell script]
+----
+mkdir build
+cd build
+cmake ..
+make
+----
+
+=== Copy to Pico
+
+Hold down the `BOOTSEL` button and connect the Pico to the computer with a usb
+cable.  Copy the `pwm.uf2` file to the `RPI-RP2` and the programme will be 
+automatically installed.
+
+== Controlling
+
+The PWM outputs can be controlled over I2C.  The easiest way to do this is from
+a Raspberry Pi.
+
+=== Connecting the I2C bus
+
+Start by https://www.raspberrypi-spy.co.uk/2014/11/enabling-the-i2c-interface-on-the-raspberry-pi/[enabling I2C on the Pi].
+
+Now connect the Pi to the Pico.  Using the default pins, connect the following:
+
+WARNING: This wiring has no reverse voltage protection!  Do not connect the
+Pico to USB while it is connected to the Pi.
+
+.Pin connections
+|===
+
+|Pi |Pico |Function
+
+|2
+|39
+|+5 v
+
+|6
+|38
+|GND
+
+|3
+|6
+|SDA
+
+|5
+|7
+|SCL
+
+|===
+
+=== Connecting outputs
+
+The PWM channels are indexed from 0 to 7, and by default appear on pins 9 to 12
+and 14 to 17.
+
+=== I2C commands
+
+By default the PWM driver is at address 0x3F on the I2C bus.  Commands take two
+arguments: the index of the PWM and the level.  The index is between 0 and 7,
+and the level between 0 and 255.
+
+On the Raspberry Pi, you can use `i2cset` to set these values:
+
+[source, shell script]
+i2cset -y 1 0x3f 0 128
+
+On the original Model B Rev 1 Pi, this uses a different I2C controller:
+
+[source, shell script]
+i2cset -y 0 0x3f 0 128
+
+== Configuration
+
+By default, the PWM channels appear on pins 9 to 12 and 14 to 17.  The PWM
+frequency is set to 150 kHz for driving LEDs.  The I2C bus is on the default
+pins, 6 and 7.
+
+The PWM pins can be changed by adjusting the `pins` array.
+
+The frequency is set in the call to `pwm_program_init`.  There is an
+alternative constant, `FAN_FREQ`, defined for driving PWM controlled fans that
+expect a 25 kHz frequency.  The maximum frequency is about 162 kHz, and the PIO
+clock divider will behave oddly below about 2 kHz.
+
+I2C can be configured by setting the appropriate `I2C_` constants.
+
+== References
+
+This project uses code inspired by Graham Smith on the https://www.raspberrypi.org/forums/viewtopic.php?t=304074#p1825651[Raspberry Pi forums]
+and by Ben Everard at https://hackspace.raspberrypi.org/articles/flashing-lights-with-micropython-and-programmable-i-o-part-2[HackSpace].

@@ -1,0 +1,42 @@
+
+.program pwm
+.side_set 1 opt
+
+    pull block
+    mov isr, osr
+
+.wrap_target
+    pull noblock side 0     ; 1
+    mov x, osr              ; 1
+    mov y, isr              ; 1
+pwmloop:
+    jmp !y skip             ; 256
+    jmp x!=y skip           ; 255
+    nop side 1              ; 1
+skip:
+    jmp y-- pwmloop         ; 256
+.wrap
+
+% c-sdk {
+#ifndef _HARDWARE_CLOCKS_H_
+#include "hardware/clocks.h"
+#endif
+#ifndef _HARDWARE_STRUCTS_CLOCKS_H
+#include "hardware/structs/clocks.h"
+#endif
+
+#define INSTRUCTIONS_PER_LOOP 771
+
+static inline void pwm_program_init(PIO pio, uint sm, uint offset, uint pin, uint freq, uint levels) {
+   pio_gpio_init(pio, pin);
+   pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+   pio_sm_config c = pwm_program_get_default_config(offset);
+   sm_config_set_sideset_pins(&c, pin);
+   uint32_t f_clk_sys = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS);
+   float clk_divider = (float)f_clk_sys / (INSTRUCTIONS_PER_LOOP * (freq / KHZ));
+   sm_config_set_clkdiv(&c, clk_divider);
+   pio_sm_init(pio, sm, offset, &c);
+   pio_sm_put_blocking(pio, sm, levels);
+   pio_sm_set_enabled(pio, sm, true);
+}
+%}
