@@ -19,8 +19,10 @@
     "cmake.buildBeforeRun": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
-        "led_pwm.pio.h": "c"
+        "pwm.pio.h": "c",
+        "tiny_2040.h": "c",
+        "pio.h": "c",
+        "stdlib.h": "c"
     },
-    "python.pythonPath": "${env:VIRTUAL_ENV}/.venv/rst/bin/python3.8",
     "restructuredtext.confPath": ""
 }
