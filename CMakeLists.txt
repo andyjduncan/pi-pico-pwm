@@ -15,46 +15,23 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(pwm_pico pwm.c)
+add_executable(pwm pwm.c)
 
-pico_generate_pio_header(pwm_pico ${CMAKE_CURRENT_LIST_DIR}/pwm.pio)
+pico_generate_pio_header(pwm ${CMAKE_CURRENT_LIST_DIR}/pwm.pio)
 
-pico_set_program_name(pwm_pico "pwm")
-pico_set_program_version(pwm_pico "0.1")
+pico_set_program_name(pwm "pwm")
+pico_set_program_version(pwm "0.1")
 
-pico_enable_stdio_uart(pwm_pico 1)
-pico_enable_stdio_usb(pwm_pico 0)
+pico_enable_stdio_uart(pwm 1)
+pico_enable_stdio_usb(pwm 0)
 
 # Add the standard library to the build
-target_link_libraries(pwm_pico pico_stdlib)
+target_link_libraries(pwm pico_stdlib)
 
 # Add any user requested libraries
-target_link_libraries(pwm_pico
+target_link_libraries(pwm
         hardware_i2c
         hardware_pio
         )
 
-pico_add_extra_outputs(pwm_pico)
-target_compile_definitions(pwm_pico PRIVATE TARGET_PICO)
-
-add_executable(pwm_tiny_2040 pwm.c)
-
-pico_generate_pio_header(pwm_tiny_2040 ${CMAKE_CURRENT_LIST_DIR}/pwm.pio)
-
-pico_set_program_name(pwm_tiny_2040 "pwm")
-pico_set_program_version(pwm_tiny_2040 "0.1")
-
-pico_enable_stdio_uart(pwm_tiny_2040 1)
-pico_enable_stdio_usb(pwm_tiny_2040 0)
-
-# Add the standard library to the build
-target_link_libraries(pwm_tiny_2040 pico_stdlib)
-
-# Add any user requested libraries
-target_link_libraries(pwm_tiny_2040
-        hardware_i2c
-        hardware_pio
-        )
-
-pico_add_extra_outputs(pwm_tiny_2040)
-target_compile_definitions(pwm_tiny_2040 PRIVATE TARGET_TINY_2040)
+pico_add_extra_outputs(pwm)

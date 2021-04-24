@@ -22,7 +22,8 @@
         "pwm.pio.h": "c",
         "tiny_2040.h": "c",
         "pio.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "clocks.h": "c"
     },
     "restructuredtext.confPath": ""
 }

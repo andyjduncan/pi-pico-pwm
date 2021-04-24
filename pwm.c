@@ -7,12 +7,16 @@
 
 #include "pwm.pio.h"
 
-#ifdef TARGET_PICO
-#include "pico.h"
-#elif TARGET_TINY_2040
-#include "tiny_2040.h"
+#ifdef PIMORONI_TINY2040
+#include "pimoroni_tiny2040.h"
 #else
-#error "No target defined!"
+#include "pico.h"
+#endif
+
+#if PICO_DEFAULT_LED_PIN_INVERTED
+#define STATUS_LED_LEVEL 0
+#else
+#define STATUS_LED_LEVEL 1
 #endif
 
 #define I2C_PERIPHERAL_ADDR 0x3F
@@ -36,7 +40,7 @@ void create_pwm(PIO pio, uint index, uint offset) {
 
   int sm = pio_claim_unused_sm(pio, true);
 
-  pwm_program_init(pio, sm, offset, pins[index], FAN_FREQ, MAX_LEVEL);
+  pwm_program_init(pio, sm, offset, PINS[index], FAN_FREQ, MAX_LEVEL);
 
   pwm_sms[index] = sm;
   pios[index] = pio;
@@ -66,12 +70,11 @@ void i2c_irq_handler() {
     // Check if this is the 1st byte we have received
     if (value & I2C_IC_DATA_CMD_FIRST_DATA_BYTE_BITS) {
 
-      // If so treat it as the address to use
+      // If so treat it as the pwm device to use
       pwm_to_set = (uint8_t)(value & I2C_IC_DATA_CMD_DAT_BITS);
 
     } else {
-      // If not 1st byte then store the data in the RAM
-      // and increment the address to point to next byte
+      // If not 1st byte then extract new level and set flag
       level_to_set = (uint8_t)(value & I2C_IC_DATA_CMD_DAT_BITS);
       set_new_level = true;
     }
@@ -99,9 +102,9 @@ void initialise_i2c() {
 }
 
 void initialised() {
-  gpio_init(STATUS_LED_PIN);
-  gpio_set_dir(STATUS_LED_PIN, GPIO_OUT);
-  gpio_put(STATUS_LED_PIN, STATUS_LED_LEVEL);
+  gpio_init(PICO_DEFAULT_LED_PIN);
+  gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+  gpio_put(PICO_DEFAULT_LED_PIN, STATUS_LED_LEVEL);
 }
 
 int main() {

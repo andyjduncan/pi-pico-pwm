@@ -103,6 +103,23 @@ clock divider will behave oddly below about 2 kHz.
 
 I2C can be configured by setting the appropriate `I2C_` constants.
 
+== Targetting Other Boards
+
+The binary can be built to target other RP2040 based boards.  This follows the
+same scheme used by the https://datasheets.raspberrypi.org/pico/raspberry-pi-pico-c-sdk.pdf[Pico SDK] (appendix D).
+Pin assignments are defined in header files, following the same naming scheme.
+
+=== Pimoroni Tiny 2040
+
+Pin assignments for the https://shop.pimoroni.com/products/tiny-2040[Pimoroni Tiny 2040]
+are defined in `pimonoroni_tiny2040.h`.  I2C connects to GPIO 26 and 27, pwms on 0 to 7.
+
+[source, shell script]
+mkdir pimoroni_tiny2040_build
+cd pimononi_tiny2040_build
+cmake -D"PICO_BOARD=pimoroni_tiny2040" ..
+make
+
 == References
 
 This project uses code inspired by Graham Smith on the https://www.raspberrypi.org/forums/viewtopic.php?t=304074#p1825651[Raspberry Pi forums]
