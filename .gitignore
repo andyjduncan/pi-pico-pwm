@@ -1,3 +1,5 @@
 build/
 pimoroni_tiny2040_build/
 
+.idea
+.DS_Store

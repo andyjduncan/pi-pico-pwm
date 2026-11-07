@@ -36,7 +36,7 @@ volatile uint8_t level_to_set = 0;
 
 volatile bool set_new_level = false;
 
-void create_pwm(PIO pio, uint index, uint offset) {
+void create_pwm(PIO pio, int index, int offset) {
 
   int sm = pio_claim_unused_sm(pio, true);
 
@@ -47,8 +47,8 @@ void create_pwm(PIO pio, uint index, uint offset) {
 }
 
 void initialise_pwm() {
-  uint offset0 = pio_add_program(pio0, &pwm_program);
-  uint offset1 = pio_add_program(pio1, &pwm_program);
+  int offset0 = pio_add_program(pio0, &pwm_program);
+  int offset1 = pio_add_program(pio1, &pwm_program);
 
   for (uint8_t i = 0; i < 4; i++) {
     create_pwm(pio0, i, offset0);
