@@ -4,8 +4,10 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "pwm.pio.h"
+#include "duty_cycle_mapping.h"
 
 #ifdef PIMORONI_TINY2040
 #include "pimoroni_tiny2040.h"
@@ -21,32 +23,41 @@
 
 #define I2C_PERIPHERAL_ADDR 0x3F
 
-#define FAN_FREQ 25000
-#define LED_FREQ 150000
+#define FAN_FREQ 2500
+#define LED_FREQ 10000
 
-#define MAX_LEVEL 255
+#define MAX_LEVEL 255.f
 
-PIO pios[8];
+uint8_t newLevel = 0;
 
-uint8_t pwm_sms[8];
+static PIO pios[8];
 
-volatile uint8_t pwm_to_set = 0;
+static uint8_t pwm_sms[8];
 
-volatile uint8_t level_to_set = 0;
+static volatile uint8_t pwm_to_set = 0;
 
-volatile bool set_new_level = false;
+static volatile uint8_t level_to_set = 0;
 
-void create_pwm(PIO pio, int index, int offset) {
+static volatile bool set_new_level = false;
+
+bool repeating_timer_callback(__unused struct repeating_timer *t);
+
+static void create_pwm(PIO pio, int index, int offset) {
 
   int sm = pio_claim_unused_sm(pio, true);
 
-  pwm_program_init(pio, sm, offset, PINS[index], FAN_FREQ, MAX_LEVEL);
+  uint8_t pin = PINS[index];
+
+  gpio_set_function(pin, index < 4 ? GPIO_FUNC_PIO0 : GPIO_FUNC_PIO1);
+  gpio_pull_down(pin);
+
+  pwm_program_init(pio, sm, offset, pin, LED_FREQ);
 
   pwm_sms[index] = sm;
   pios[index] = pio;
 }
 
-void initialise_pwm() {
+static void initialise_pwm() {
   int offset0 = pio_add_program(pio0, &pwm_program);
   int offset1 = pio_add_program(pio1, &pwm_program);
 
@@ -56,7 +67,7 @@ void initialise_pwm() {
   }
 }
 
-void i2c_irq_handler() {
+static void i2c_irq_handler() {
 
   // Get interrupt status
   uint32_t status = I2C->hw->intr_stat;
@@ -81,7 +92,7 @@ void i2c_irq_handler() {
   }
 }
 
-void initialise_i2c() {
+static void initialise_i2c() {
   // I2C Initialisation. Using it at 100Khz.
   i2c_init(I2C, 100 * 1000);
   i2c_set_slave_mode(I2C, true, I2C_PERIPHERAL_ADDR);
@@ -101,13 +112,15 @@ void initialise_i2c() {
   irq_set_enabled(I2C_IRQ, true);
 }
 
-void initialised() {
+static void initialised() {
   gpio_init(PICO_DEFAULT_LED_PIN);
   gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
   gpio_put(PICO_DEFAULT_LED_PIN, STATUS_LED_LEVEL);
 }
 
 int main() {
+  setup_default_uart();
+  printf("Running\n");
   initialise_pwm();
 
   initialise_i2c();
@@ -116,10 +129,10 @@ int main() {
 
   while (true) {
     if (set_new_level) {
-      pio_sm_put_blocking(pios[pwm_to_set], pwm_sms[pwm_to_set], level_to_set);
+      double cycle = (float)level_to_set / MAX_LEVEL;
+      uint32_t pwm_mask = cycle_to_mask(cycle);
+      pio_sm_put(pios[pwm_to_set], pwm_sms[pwm_to_set], pwm_mask);
       set_new_level = false;
     }
   }
-
-  return 0;
 }
